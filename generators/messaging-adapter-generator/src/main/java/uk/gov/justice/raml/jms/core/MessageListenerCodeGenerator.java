@@ -11,7 +11,7 @@ import static uk.gov.justice.raml.jms.core.MediaTypesUtil.containsGeneralJsonMim
 import static uk.gov.justice.raml.jms.core.MediaTypesUtil.mediaTypesFrom;
 import static uk.gov.justice.services.generators.commons.helper.Names.namesListStringFrom;
 
-import uk.gov.justice.raml.core.GeneratorConfig;
+import uk.gov.justice.maven.generator.io.files.parser.core.GeneratorConfig;
 import uk.gov.justice.services.adapter.messaging.EventListenerValidationInterceptor;
 import uk.gov.justice.services.adapter.messaging.JmsLoggerMetadataInterceptor;
 import uk.gov.justice.services.adapter.messaging.JmsProcessor;
@@ -19,6 +19,7 @@ import uk.gov.justice.services.adapter.messaging.JsonSchemaValidationInterceptor
 import uk.gov.justice.services.core.annotation.Adapter;
 import uk.gov.justice.services.core.annotation.Component;
 import uk.gov.justice.services.core.interceptor.InterceptorChainProcessor;
+import uk.gov.justice.services.generators.commons.config.CommonGeneratorProperties;
 import uk.gov.justice.services.generators.commons.helper.MessagingAdapterBaseUri;
 import uk.gov.justice.services.generators.commons.helper.MessagingResourceUri;
 import uk.gov.justice.services.messaging.logging.LoggerUtils;
@@ -69,7 +70,6 @@ class MessageListenerCodeGenerator {
     private static final String CLIENT_ID = "clientId";
     private static final String SUBSCRIPTION_NAME = "subscriptionName";
     private static final String SHARE_SUBSCRIPTIONS = "shareSubscriptions";
-    private static final String CUSTOM_MDB_POOL_CONFIG_PROPERTY = "customMDBPool";
     private static final String TRUE = "TRUE";
 
     private final ComponentDestinationType componentDestinationType = new ComponentDestinationType();
@@ -152,7 +152,9 @@ class MessageListenerCodeGenerator {
     }
 
     private boolean shouldAddCustomPoolConfiguration(final GeneratorConfig configuration) {
-        return TRUE.equalsIgnoreCase(configuration.getGeneratorProperties().get(CUSTOM_MDB_POOL_CONFIG_PROPERTY));
+        CommonGeneratorProperties properties = (CommonGeneratorProperties)configuration
+                .getGeneratorProperties();
+        return TRUE.equalsIgnoreCase(properties.getCustomMDBPool());
     }
 
     /**

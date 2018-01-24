@@ -2,7 +2,6 @@ package uk.gov.justice.raml.jms.core;
 
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyMap;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -18,6 +17,7 @@ import static uk.gov.justice.services.generators.test.utils.config.GeneratorConf
 
 import uk.gov.justice.services.adapter.messaging.JmsProcessor;
 import uk.gov.justice.services.event.buffer.api.AbstractEventFilter;
+import uk.gov.justice.services.generators.commons.config.CommonGeneratorProperties;
 import uk.gov.justice.services.generators.test.utils.BaseGeneratorTest;
 
 import java.io.File;
@@ -55,7 +55,7 @@ public class JmsEndpointGenerator_EventFilterTest extends BaseGeneratorTest {
                                         .withMediaTypeWithoutSchema("application/vnd.structure.eventA+json")
                                         .withMediaTypeWithoutSchema("application/vnd.structure.eventB+json")))
                         .build(),
-                configurationWithBasePackage(BASE_PACKAGE, outputFolder, emptyMap()));
+                configurationWithBasePackage(BASE_PACKAGE, outputFolder, new CommonGeneratorProperties()));
 
         Class<?> clazz = compiler.compiledClassOf(BASE_PACKAGE, "StructureEventListenerEventFilter");
 
@@ -77,7 +77,7 @@ public class JmsEndpointGenerator_EventFilterTest extends BaseGeneratorTest {
                                         .withMediaTypeWithoutSchema("application/vnd.structure.eventA+json")
                                         .withMediaTypeWithoutSchema("application/vnd.structure.eventB+json")))
                         .build(),
-                configurationWithBasePackage(BASE_PACKAGE, outputFolder, emptyMap()));
+                configurationWithBasePackage(BASE_PACKAGE, outputFolder, new CommonGeneratorProperties()));
 
         final File packageDir = new File(outputFolder.getRoot().getAbsolutePath() + BASE_PACKAGE_FOLDER);
         assertThat(asList(packageDir.listFiles()), not(hasItem(hasProperty("name", containsString("EventFilter")))));
@@ -94,7 +94,7 @@ public class JmsEndpointGenerator_EventFilterTest extends BaseGeneratorTest {
                                         .withHttpActionType(POST)
                                         .withMediaTypeWithoutSchema("application/json")))
                         .build(),
-                configurationWithBasePackage(BASE_PACKAGE, outputFolder, emptyMap()));
+                configurationWithBasePackage(BASE_PACKAGE, outputFolder, new CommonGeneratorProperties()));
 
         final File packageDir = new File(outputFolder.getRoot().getAbsolutePath() + BASE_PACKAGE_FOLDER);
         assertThat(asList(packageDir.listFiles()), not(hasItem(hasProperty("name", containsString("EventFilter")))));
@@ -107,7 +107,7 @@ public class JmsEndpointGenerator_EventFilterTest extends BaseGeneratorTest {
                         .withBaseUri("message://event/listener/message/structure")
                         .with(resource().withDefaultPostAction())
                         .build(),
-                configurationWithBasePackage(BASE_PACKAGE, outputFolder, emptyMap()));
+                configurationWithBasePackage(BASE_PACKAGE, outputFolder, new CommonGeneratorProperties()));
 
         Class<?> clazz = compiler.compiledClassOf(BASE_PACKAGE, "StructureEventListenerEventFilter");
         assertThat(clazz.getAnnotation(ApplicationScoped.class), is(not(nullValue())));
@@ -127,7 +127,7 @@ public class JmsEndpointGenerator_EventFilterTest extends BaseGeneratorTest {
                                         .withHttpActionType(POST)
                                         .withMediaTypeWithoutSchema("application/vnd.structure.eventA+json")))
                         .build(),
-                configurationWithBasePackage(BASE_PACKAGE, outputFolder, emptyMap()));
+                configurationWithBasePackage(BASE_PACKAGE, outputFolder, new CommonGeneratorProperties()));
 
         Class<?> clazz = compiler.compiledClassOf(BASE_PACKAGE, "MyHyphenatedServiceEventListenerEventFilter");
 

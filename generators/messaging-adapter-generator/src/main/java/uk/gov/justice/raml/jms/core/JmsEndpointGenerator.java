@@ -5,8 +5,8 @@ import static uk.gov.justice.raml.jms.core.JmsEndPointGeneratorUtil.shouldGenera
 import static uk.gov.justice.raml.jms.core.JmsEndPointGeneratorUtil.shouldListenToAllMessages;
 import static uk.gov.justice.services.generators.commons.helper.GeneratedClassWriter.writeClass;
 
-import uk.gov.justice.raml.core.Generator;
-import uk.gov.justice.raml.core.GeneratorConfig;
+import uk.gov.justice.maven.generator.io.files.parser.core.Generator;
+import uk.gov.justice.maven.generator.io.files.parser.core.GeneratorConfig;
 import uk.gov.justice.raml.jms.validator.BaseUriRamlValidator;
 import uk.gov.justice.services.generators.commons.helper.MessagingAdapterBaseUri;
 import uk.gov.justice.services.generators.commons.mapping.MediaTypeToSchemaIdGenerator;
@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Generates JMS endpoint classes out of RAML object
  */
-public class JmsEndpointGenerator implements Generator {
+public class JmsEndpointGenerator implements Generator<Raml> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JmsEndpointGenerator.class);
     private final MessageListenerCodeGenerator messageListenerCodeGenerator = new MessageListenerCodeGenerator();
