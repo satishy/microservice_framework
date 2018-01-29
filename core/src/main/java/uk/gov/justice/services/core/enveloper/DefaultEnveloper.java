@@ -15,6 +15,7 @@ import uk.gov.justice.services.common.converter.ZonedDateTimes;
 import uk.gov.justice.services.common.util.Clock;
 import uk.gov.justice.services.core.enveloper.exception.InvalidEventException;
 import uk.gov.justice.services.core.extension.EventFoundEvent;
+import uk.gov.justice.services.messaging.Envelope;
 import uk.gov.justice.services.messaging.JsonEnvelope;
 import uk.gov.justice.services.messaging.JsonObjects;
 import uk.gov.justice.services.messaging.Metadata;
@@ -65,12 +66,20 @@ public class DefaultEnveloper implements Enveloper {
         eventMap.putIfAbsent(event.getClazz(), event.getEventName());
     }
 
-    public Function<Object, JsonEnvelope> withMetadataFrom(final JsonEnvelope envelope) {
+    public Function<Object, JsonEnvelope> withMetadataFrom(final Envelope<?> envelope) {
         return x -> envelopeFrom(buildMetaData(x, envelope.metadata()), objectToJsonValueConverter.convert(x));
     }
 
-    public Function<Object, JsonEnvelope> withMetadataFrom(final JsonEnvelope envelope, final String name) {
+    public <R> Function<R, Envelope<R>> withMetadataFromPojoEnvelope(final Envelope<?> envelope) {
+        return x -> uk.gov.justice.services.messaging.Envelope.envelopeFrom(buildMetaData(x, envelope.metadata()), x);
+    }
+
+    public Function<Object, JsonEnvelope> withMetadataFrom(final Envelope<?> envelope, final String name) {
         return x -> envelopeFrom(buildMetaData(envelope.metadata(), name), x == null ? JsonValue.NULL : objectToJsonValueConverter.convert(x));
+    }
+
+    public <R> Function<R, Envelope<R>> withMetadataFromPojoEnvelope(final Envelope<?> envelope, final String name) {
+        return x -> uk.gov.justice.services.messaging.Envelope.envelopeFrom(buildMetaData(envelope.metadata(), name), x);
     }
 
     private Metadata buildMetaData(final Object eventObject, final Metadata metadata) {
