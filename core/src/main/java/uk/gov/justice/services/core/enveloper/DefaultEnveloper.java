@@ -1,6 +1,8 @@
 package uk.gov.justice.services.core.enveloper;
 
 import static java.lang.String.format;
+import static java.util.UUID.*;
+import static uk.gov.justice.services.messaging.Envelope.envelopeFrom;
 import static uk.gov.justice.services.messaging.JsonEnvelope.envelopeFrom;
 import static uk.gov.justice.services.messaging.JsonEnvelope.metadataFrom;
 import static uk.gov.justice.services.messaging.JsonMetadata.CAUSATION;
@@ -19,8 +21,12 @@ import uk.gov.justice.services.messaging.Envelope;
 import uk.gov.justice.services.messaging.JsonEnvelope;
 import uk.gov.justice.services.messaging.JsonObjects;
 import uk.gov.justice.services.messaging.Metadata;
+import uk.gov.justice.services.messaging.spi.DefaultEnvelope;
+import uk.gov.justice.services.messaging.spi.DefaultJsonMetadata;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -70,16 +76,24 @@ public class DefaultEnveloper implements Enveloper {
         return x -> envelopeFrom(buildMetaData(x, envelope.metadata()), objectToJsonValueConverter.convert(x));
     }
 
-    public <R> Function<R, Envelope<R>> withMetadataFromPojoEnvelope(final Envelope<?> envelope) {
-        return x -> uk.gov.justice.services.messaging.Envelope.envelopeFrom(buildMetaData(x, envelope.metadata()), x);
-    }
-
     public Function<Object, JsonEnvelope> withMetadataFrom(final Envelope<?> envelope, final String name) {
         return x -> envelopeFrom(buildMetaData(envelope.metadata(), name), x == null ? JsonValue.NULL : objectToJsonValueConverter.convert(x));
     }
 
+    public <R> Function<R, Envelope<R>> withMetadataFromPojoEnvelope(final Envelope<?> envelope) {
+        return x -> envelopeFrom(buildMetaData(x, envelope.metadata()), x);
+    }
+
+    public <R> Function<R, Envelope<R>> withMetadataFromPojoEnvelope(final Envelope<?> envelope, final Class<R> clazz) {
+        return x -> envelopeFrom(buildMetaData(x, envelope.metadata()), x);
+    }
+
+    public <R> Envelope<R> withMetadataFromPojoEnvelopeBuilder(final Envelope<?> envelope, final Class<R> clazz) {
+        return DefaultEnvelope.envelopeBuilder().withMetadata(buildMetaData(envelope.metadata())).withPayload(envelope.payload()).build();
+    }
+
     public <R> Function<R, Envelope<R>> withMetadataFromPojoEnvelope(final Envelope<?> envelope, final String name) {
-        return x -> uk.gov.justice.services.messaging.Envelope.envelopeFrom(buildMetaData(envelope.metadata(), name), x);
+        return x -> envelopeFrom(buildMetaData(envelope.metadata(), name), x);
     }
 
     private Metadata buildMetaData(final Object eventObject, final Metadata metadata) {
@@ -100,13 +114,17 @@ public class DefaultEnveloper implements Enveloper {
                 x -> !Arrays.asList(ID, NAME, CAUSATION, STREAM).contains(x));
 
         final JsonObject jsonObject = metadataBuilder
-                .add(ID, UUID.randomUUID().toString())
+                .add(ID, randomUUID().toString())
                 .add(NAME, name)
                 .add(CAUSATION, createCausation(metadata))
                 .add(CREATED_AT, ZonedDateTimes.toString(clock.now()))
                 .build();
 
         return metadataFrom(jsonObject).build();
+    }
+
+    private Metadata buildMetaData(final Metadata metadata) {
+        return Envelope.metadataFrom(metadata).withId(randomUUID()).withCausation(createCausationForPojo(metadata)).build();
     }
 
     private JsonArray createCausation(final Metadata metadata) {
@@ -117,5 +135,15 @@ public class DefaultEnveloper implements Enveloper {
         causation.add(metadata.id().toString());
 
         return causation.build();
+    }
+
+    private UUID[] createCausationForPojo(final Metadata metadata) {
+        List<UUID> causation = new ArrayList<>();
+        if (metadata.causation() != null && metadata.causation().size() > 0) {
+            causation.addAll(metadata.causation());
+        }
+        causation.add(metadata.id());
+
+        return causation.toArray(new UUID[causation.size()]);
     }
 }

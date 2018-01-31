@@ -74,27 +74,46 @@ public class DefaultEnveloperTest {
         assertThat(event.payloadAsJsonObject().getString("somePayloadKey"), equalTo("somePayloadValue"));
     }
 
-//    @Test
-//    public void shouldEnvelopeEventObjectInPojoEnvelope() throws JsonProcessingException {
-//        enveloper.register(new EventFoundEvent(TestEvent.class, TEST_EVENT_NAME));
-//
-//        final Envelope<TestEvent> event = enveloper.withMetadataFromPojoEnvelope(
-//                envelopeFrom(
-//                        metadataBuilder()
-//                                .withId(COMMAND_UUID)
-//                                .withName(TEST_EVENT_NAME)
-//                                .withCausation(OLD_CAUSATION_ID),
-//                        createObjectBuilder()))
-//                .apply(new TestEvent("somePayloadValue"));
-//
-//        assertThat(event.metadata().id(), notNullValue());
-//        assertThat(event.metadata().id(), not(equalTo(COMMAND_UUID)));
-//        assertThat(event.metadata().name(), equalTo(TEST_EVENT_NAME));
-//        assertThat(event.metadata().causation().size(), equalTo(2));
-//        assertThat(event.metadata().causation().get(0), equalTo(OLD_CAUSATION_ID));
-//        assertThat(event.metadata().causation().get(1), equalTo(COMMAND_UUID));
-//        assertThat(event.payload().getSomePayloadKey(), equalTo("somePayloadValue"));
-//    }
+    @Test
+    public void shouldEnvelopeEventObjectInPojoEnvelope() throws JsonProcessingException {
+        enveloper.register(new EventFoundEvent(TestEvent.class, TEST_EVENT_NAME));
+
+        final Envelope<TestEvent> event = enveloper.withMetadataFromPojoEnvelope(
+                envelopeFrom(
+                        metadataBuilder()
+                                .withId(COMMAND_UUID)
+                                .withName(TEST_EVENT_NAME)
+                                .withCausation(OLD_CAUSATION_ID),
+                        createObjectBuilder()), TestEvent.class)
+                .apply(new TestEvent("somePayloadValue"));
+
+        assertThat(event.metadata().id(), notNullValue());
+        assertThat(event.metadata().id(), not(equalTo(COMMAND_UUID)));
+        assertThat(event.metadata().name(), equalTo(TEST_EVENT_NAME));
+        assertThat(event.metadata().causation().size(), equalTo(2));
+        assertThat(event.metadata().causation().get(0), equalTo(OLD_CAUSATION_ID));
+        assertThat(event.metadata().causation().get(1), equalTo(COMMAND_UUID));
+        assertThat(event.payload().getSomePayloadKey(), equalTo("somePayloadValue"));
+    }
+
+    @Test
+    public void shouldEnvelopeEventObjectInPojoEnvelopeUsingBuilder() throws JsonProcessingException {
+
+        final Envelope<TestEvent> event = enveloper.withMetadataFromPojoEnvelopeBuilder(
+                envelopeFrom(
+                        metadataBuilder()
+                                .withId(COMMAND_UUID)
+                                .withName(TEST_EVENT_NAME)
+                                .withCausation(OLD_CAUSATION_ID),
+                        createObjectBuilder()), TestEvent.class);
+
+        assertThat(event.metadata().id(), notNullValue());
+        assertThat(event.metadata().id(), not(equalTo(COMMAND_UUID)));
+        assertThat(event.metadata().name(), equalTo(TEST_EVENT_NAME));
+        assertThat(event.metadata().causation().size(), equalTo(2));
+        assertThat(event.metadata().causation().get(0), equalTo(OLD_CAUSATION_ID));
+        assertThat(event.metadata().causation().get(1), equalTo(COMMAND_UUID));
+    }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowExceptionOnNullEvent() throws JsonProcessingException {
