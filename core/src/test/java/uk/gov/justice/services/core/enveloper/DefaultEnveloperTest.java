@@ -105,7 +105,7 @@ public class DefaultEnveloperTest {
                                 .withId(COMMAND_UUID)
                                 .withName(TEST_EVENT_NAME)
                                 .withCausation(OLD_CAUSATION_ID),
-                        createObjectBuilder()), TestEvent.class);
+                        createObjectBuilder()), new TestEvent("somePayloadValue"));
 
         assertThat(event.metadata().id(), notNullValue());
         assertThat(event.metadata().id(), not(equalTo(COMMAND_UUID)));
@@ -113,6 +113,7 @@ public class DefaultEnveloperTest {
         assertThat(event.metadata().causation().size(), equalTo(2));
         assertThat(event.metadata().causation().get(0), equalTo(OLD_CAUSATION_ID));
         assertThat(event.metadata().causation().get(1), equalTo(COMMAND_UUID));
+        assertThat(event.payload().getSomePayloadKey(), equalTo("somePayloadValue"));
     }
 
     @Test(expected = IllegalArgumentException.class)

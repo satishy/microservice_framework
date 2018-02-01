@@ -51,8 +51,8 @@ public class DefaultEnvelope <T> implements Envelope<T> {
         }
 
         @Override
-        public Envelope build() {
-            return new DefaultEnvelope(metadata,payload);
+        public Envelope<T> build() {
+            return new DefaultEnvelope<T>(metadata,payload);
         }
     }
 }

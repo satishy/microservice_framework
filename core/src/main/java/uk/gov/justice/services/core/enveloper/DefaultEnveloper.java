@@ -88,8 +88,8 @@ public class DefaultEnveloper implements Enveloper {
         return x -> envelopeFrom(buildMetaData(x, envelope.metadata()), x);
     }
 
-    public <R> Envelope<R> withMetadataFromPojoEnvelopeBuilder(final Envelope<?> envelope, final Class<R> clazz) {
-        return DefaultEnvelope.envelopeBuilder().withMetadata(buildMetaData(envelope.metadata())).withPayload(envelope.payload()).build();
+    public <R> Envelope<R> withMetadataFromPojoEnvelopeBuilder(final Envelope<?> envelope, final R payload) {
+        return DefaultEnvelope.envelopeBuilder().withMetadata(buildMetaData(envelope.metadata())).withPayload(payload).build();
     }
 
     public <R> Function<R, Envelope<R>> withMetadataFromPojoEnvelope(final Envelope<?> envelope, final String name) {
