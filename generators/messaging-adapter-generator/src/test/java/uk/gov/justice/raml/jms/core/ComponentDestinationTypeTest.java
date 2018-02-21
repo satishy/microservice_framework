@@ -59,12 +59,4 @@ public class ComponentDestinationTypeTest {
         assertThat(componentDestinationType.isSupported(QUERY_VIEW), equalTo(false));
         assertThat(componentDestinationType.isSupported(UNKNOWN), equalTo(false));
     }
-
-    @Test
-    public void shouldThrowExceptionIfNoInputDestinationTypeFound() throws Exception {
-        expectedException.expect(IllegalArgumentException.class);
-        expectedException.expectMessage("No input destination type defined for service component of type EVENT_API");
-
-        componentDestinationType.inputTypeFor(EVENT_API);
-    }
 }

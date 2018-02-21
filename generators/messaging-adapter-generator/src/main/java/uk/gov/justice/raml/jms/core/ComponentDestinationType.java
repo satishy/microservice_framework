@@ -44,7 +44,7 @@ public class ComponentDestinationType {
             return components.get(component);
         }
 
-        throw new IllegalArgumentException("No input destination type defined for service component of type " + component);
+        return Topic.class;
     }
 
 
