@@ -9,6 +9,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 import static uk.gov.justice.raml.jms.core.JmsEndPointGeneratorUtil.shouldGenerateEventFilter;
 import static uk.gov.justice.raml.jms.core.MediaTypesUtil.containsGeneralJsonMimeType;
 import static uk.gov.justice.raml.jms.core.MediaTypesUtil.mediaTypesFrom;
+import static uk.gov.justice.services.generators.commons.config.GeneratorProperties.serviceComponentOf;
 import static uk.gov.justice.services.generators.commons.helper.Names.namesListStringFrom;
 
 import uk.gov.justice.raml.core.GeneratorConfig;
@@ -100,51 +101,47 @@ class MessageListenerCodeGenerator {
                                            final boolean listenToAllMessages,
                                            final GeneratorConfig generatorConfiguration) {
         final MessagingResourceUri resourceUri = new MessagingResourceUri(resource.getUri());
-        final String component = componentOf(baseUri);
+        final String component = serviceComponentOf(generatorConfiguration);
 
-        if (componentDestinationType.isSupported(component)) {
+        final TypeSpec.Builder typeSpecBuilder = classBuilder(classNameOf(baseUri, resourceUri))
+                .addModifiers(PUBLIC)
+                .addSuperinterface(MessageListener.class)
+                .addField(FieldSpec.builder(ClassName.get(Logger.class), LOGGER_FIELD)
+                        .addModifiers(PRIVATE, STATIC, FINAL)
+                        .initializer("$T.getLogger($L.class)", LoggerFactory.class, classNameOf(baseUri, resourceUri))
+                        .build())
+                .addField(FieldSpec.builder(ClassName.get(InterceptorChainProcessor.class), INTERCEPTOR_CHAIN_PROCESS)
+                        .addAnnotation(Inject.class)
+                        .build())
+                .addField(FieldSpec.builder(ClassName.get(JmsProcessor.class), JMS_PROCESSOR_FIELD)
+                        .addAnnotation(Inject.class)
+                        .build())
+                .addAnnotation(AnnotationSpec.builder(Adapter.class)
 
-            final TypeSpec.Builder typeSpecBuilder = classBuilder(classNameOf(baseUri, resourceUri))
-                    .addModifiers(PUBLIC)
-                    .addSuperinterface(MessageListener.class)
-                    .addField(FieldSpec.builder(ClassName.get(Logger.class), LOGGER_FIELD)
-                            .addModifiers(PRIVATE, STATIC, FINAL)
-                            .initializer("$T.getLogger($L.class)", LoggerFactory.class, classNameOf(baseUri, resourceUri))
-                            .build())
-                    .addField(FieldSpec.builder(ClassName.get(InterceptorChainProcessor.class), INTERCEPTOR_CHAIN_PROCESS)
-                            .addAnnotation(Inject.class)
-                            .build())
-                    .addField(FieldSpec.builder(ClassName.get(JmsProcessor.class), JMS_PROCESSOR_FIELD)
-                            .addAnnotation(Inject.class)
-                            .build())
-                    .addAnnotation(AnnotationSpec.builder(Adapter.class)
+                        .addMember(DEFAULT_ANNOTATION_PARAMETER, "$S", component)
+                        .build())
+                .addAnnotation(messageDrivenAnnotation(component, resource.getActions(), resourceUri, baseUri, listenToAllMessages));
 
-                            .addMember(DEFAULT_ANNOTATION_PARAMETER, "$S", component)
-                            .build())
-                    .addAnnotation(messageDrivenAnnotation(component, resource.getActions(), resourceUri, baseUri, listenToAllMessages));
+        if (!containsGeneralJsonMimeType(resource.getActions())) {
+            AnnotationSpec.Builder builder = AnnotationSpec.builder(Interceptors.class)
+                    .addMember(DEFAULT_ANNOTATION_PARAMETER, CLASS_NAME, JmsLoggerMetadataInterceptor.class);
 
-            if (!containsGeneralJsonMimeType(resource.getActions())) {
-                AnnotationSpec.Builder builder = AnnotationSpec.builder(Interceptors.class)
-                        .addMember(DEFAULT_ANNOTATION_PARAMETER, CLASS_NAME, JmsLoggerMetadataInterceptor.class);
-
-                if (shouldGenerateEventFilter(resource, baseUri)) {
-                    builder = builder.addMember(DEFAULT_ANNOTATION_PARAMETER, CLASS_NAME, EventListenerValidationInterceptor.class);
-                } else {
-                    builder = builder.addMember(DEFAULT_ANNOTATION_PARAMETER, CLASS_NAME, JsonSchemaValidationInterceptor.class);
-                }
-                typeSpecBuilder.addAnnotation(builder.build());
+            if (shouldGenerateEventFilter(resource, baseUri)) {
+                builder = builder.addMember(DEFAULT_ANNOTATION_PARAMETER, CLASS_NAME, EventListenerValidationInterceptor.class);
+            } else {
+                builder = builder.addMember(DEFAULT_ANNOTATION_PARAMETER, CLASS_NAME, JsonSchemaValidationInterceptor.class);
             }
-
-            if (shouldAddCustomPoolConfiguration(generatorConfiguration)) {
-                typeSpecBuilder.addAnnotation(AnnotationSpec.builder(Pool.class)
-                        .addMember(DEFAULT_ANNOTATION_PARAMETER, "$S", poolNameFrom(resourceUri, component))
-                        .build());
-            }
-
-            return typeSpecBuilder;
+            typeSpecBuilder.addAnnotation(builder.build());
         }
 
-        throw new IllegalStateException(format("JMS Endpoint generation is unsupported for framework component type %s", component));
+        if (shouldAddCustomPoolConfiguration(generatorConfiguration)) {
+            typeSpecBuilder.addAnnotation(AnnotationSpec.builder(Pool.class)
+                    .addMember(DEFAULT_ANNOTATION_PARAMETER, "$S", poolNameFrom(resourceUri, component))
+                    .build());
+        }
+
+        return typeSpecBuilder;
+
     }
 
     private String poolNameFrom(final MessagingResourceUri resourceUri, final String component) {
