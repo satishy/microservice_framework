@@ -10,12 +10,12 @@ import uk.gov.justice.services.messaging.Envelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@ServiceComponent(EVENT_LISTENER)
+@ServiceComponent("OTHER_EVENT_LISTENER")
 public class OtherCakeMadeEventListener {
 
     Logger logger = LoggerFactory.getLogger(OtherCakeMadeEventListener.class);
 
-    @Handles("other.cake-made")
+    @Handles("example.cake-made")
     public void handle(final Envelope<Cake> envelope) {
         logger.info("I received an {} event", envelope.metadata().name());
     }

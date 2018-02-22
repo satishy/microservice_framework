@@ -13,7 +13,7 @@
     <packaging>war</packaging>
 
     <properties>
-        <cpp.service-component>EVENT_LISTENER</cpp.service-component>
+        <cpp.service-component>OTHER_EVENT_LISTENER</cpp.service-component>
     </properties>
 
     <dependencies>
