@@ -61,14 +61,22 @@ public class JmsEndpointGenerator implements Generator {
         mediaTypeToSchemaIdGenerator.generateMediaTypeToSchemaIdMapper(raml, configuration);
     }
 
-    private Stream<? extends TypeSpec> generatedClassesFrom(final Raml raml, final Resource resource, final GeneratorConfig configuration) {
+    private Stream<TypeSpec> generatedClassesFrom(final Raml raml, final Resource resource, final GeneratorConfig configuration) {
+        final Stream.Builder<TypeSpec> streamBuilder = Stream.builder();
         final MessagingAdapterBaseUri baseUri = new MessagingAdapterBaseUri(raml.getBaseUri());
         final boolean listenToAllMessages = shouldListenToAllMessages(resource, baseUri);
 
-        final TypeSpec messageListenerCode = messageListenerCodeGenerator.generatedCodeFor(resource, baseUri, listenToAllMessages, configuration);
+        streamBuilder.add(messageListenerCodeGenerator.generatedCodeFor(resource, baseUri, listenToAllMessages, configuration));
 
-        return shouldGenerateEventFilter(resource, baseUri)
-                ? Stream.of(messageListenerCode, eventFilterCodeGenerator.generatedCodeFor(resource, baseUri))
-                : Stream.of(messageListenerCode);
+        if(shouldGenerateEventFilter(resource, baseUri)) {
+            final TypeSpec eventFilterTypeSpec = eventFilterCodeGenerator.generatedCodeFor(resource, baseUri);
+            final String eventFilterClassName = eventFilterTypeSpec.name;
+            streamBuilder.add(eventFilterTypeSpec);
+
+            //TODO: Other generation steps to go here
+
+        }
+
+        return streamBuilder.build();
     }
 }

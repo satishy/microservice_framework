@@ -101,7 +101,7 @@ class MessageListenerCodeGenerator {
                                            final boolean listenToAllMessages,
                                            final GeneratorConfig generatorConfiguration) {
         final MessagingResourceUri resourceUri = new MessagingResourceUri(resource.getUri());
-        final String component = serviceComponentOf(generatorConfiguration);
+        final String serviceComponent = serviceComponentOf(generatorConfiguration);
 
         final TypeSpec.Builder typeSpecBuilder = classBuilder(classNameOf(baseUri, resourceUri))
                 .addModifiers(PUBLIC)
@@ -117,10 +117,9 @@ class MessageListenerCodeGenerator {
                         .addAnnotation(Inject.class)
                         .build())
                 .addAnnotation(AnnotationSpec.builder(Adapter.class)
-
-                        .addMember(DEFAULT_ANNOTATION_PARAMETER, "$S", component)
+                        .addMember(DEFAULT_ANNOTATION_PARAMETER, "$S", serviceComponent)
                         .build())
-                .addAnnotation(messageDrivenAnnotation(component, resource.getActions(), resourceUri, baseUri, listenToAllMessages));
+                .addAnnotation(messageDrivenAnnotation(serviceComponent, resource.getActions(), resourceUri, baseUri, listenToAllMessages));
 
         if (!containsGeneralJsonMimeType(resource.getActions())) {
             AnnotationSpec.Builder builder = AnnotationSpec.builder(Interceptors.class)
@@ -136,7 +135,7 @@ class MessageListenerCodeGenerator {
 
         if (shouldAddCustomPoolConfiguration(generatorConfiguration)) {
             typeSpecBuilder.addAnnotation(AnnotationSpec.builder(Pool.class)
-                    .addMember(DEFAULT_ANNOTATION_PARAMETER, "$S", poolNameFrom(resourceUri, component))
+                    .addMember(DEFAULT_ANNOTATION_PARAMETER, "$S", poolNameFrom(resourceUri, serviceComponent))
                     .build());
         }
 
