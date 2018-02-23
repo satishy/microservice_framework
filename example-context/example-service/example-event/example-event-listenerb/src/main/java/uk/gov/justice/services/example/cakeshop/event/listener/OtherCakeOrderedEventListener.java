@@ -2,19 +2,19 @@ package uk.gov.justice.services.example.cakeshop.event.listener;
 
 import uk.gov.justice.services.core.annotation.Handles;
 import uk.gov.justice.services.core.annotation.ServiceComponent;
-import uk.gov.justice.services.example.cakeshop.persistence.entity.Cake;
+import uk.gov.justice.services.example.cakeshop.persistence.entity.CakeOrder;
 import uk.gov.justice.services.messaging.Envelope;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @ServiceComponent("OTHER_EVENT_LISTENER")
-public class OtherCakeMadeEventListener {
+public class OtherCakeOrderedEventListener {
 
-    Logger logger = LoggerFactory.getLogger(OtherCakeMadeEventListener.class);
+    Logger logger = LoggerFactory.getLogger(OtherCakeOrderedEventListener.class);
 
-    @Handles("other.cake-made")
-    public void handle(final Envelope<Cake> envelope) {
+    @Handles("other.cake-ordered")
+    public void handle(final Envelope<CakeOrder> envelope) {
         logger.info("I received an {} event", envelope.metadata().name());
     }
 }
