@@ -1,9 +1,6 @@
 package uk.gov.justice.services.example.provider;
 
-import static uk.gov.justice.services.core.annotation.Component.EVENT_LISTENER;
-
 import uk.gov.justice.services.components.event.listener.interceptors.EventBufferInterceptor;
-import uk.gov.justice.services.components.event.listener.interceptors.EventFilterInterceptor;
 import uk.gov.justice.services.core.interceptor.InterceptorChainEntry;
 import uk.gov.justice.services.core.interceptor.InterceptorChainEntryProvider;
 
@@ -16,12 +13,12 @@ public class ExampleEventListenerInterceptorChainProvider implements Interceptor
 
     public ExampleEventListenerInterceptorChainProvider() {
         interceptorChainEntries.add(new InterceptorChainEntry(1000, EventBufferInterceptor.class));
-        interceptorChainEntries.add(new InterceptorChainEntry(2000, EventFilterInterceptor.class));
+        interceptorChainEntries.add(new InterceptorChainEntry(2000, ExampleEventFilterInterceptor.class));
     }
 
     @Override
     public String component() {
-        return EVENT_LISTENER;
+        return "EXAMPLE_EVENT_LISTENER";
     }
 
     @Override

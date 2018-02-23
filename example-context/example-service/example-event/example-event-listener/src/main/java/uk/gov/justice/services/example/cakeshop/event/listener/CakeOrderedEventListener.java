@@ -14,7 +14,7 @@ import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@ServiceComponent(EVENT_LISTENER)
+@ServiceComponent("EXAMPLE_EVENT_LISTENER")
 public class CakeOrderedEventListener {
 
     Logger logger = LoggerFactory.getLogger(CakeOrderedEventListener.class);

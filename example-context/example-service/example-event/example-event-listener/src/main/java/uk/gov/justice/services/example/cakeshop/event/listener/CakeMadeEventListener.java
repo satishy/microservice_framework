@@ -13,7 +13,7 @@ import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@ServiceComponent(value = Component.EVENT_LISTENER)
+@ServiceComponent("EXAMPLE_EVENT_LISTENER")
 public class CakeMadeEventListener {
 
     Logger logger = LoggerFactory.getLogger(CakeMadeEventListener.class);
