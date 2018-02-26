@@ -3,13 +3,13 @@ package uk.gov.justice.raml.jms.core;
 import static org.raml.model.ActionType.POST;
 import static uk.gov.justice.raml.jms.core.JmsEndPointGeneratorUtil.shouldGenerateEventFilter;
 import static uk.gov.justice.raml.jms.core.JmsEndPointGeneratorUtil.shouldListenToAllMessages;
-import static uk.gov.justice.services.generators.commons.config.GeneratorProperties.serviceComponentOf;
 import static uk.gov.justice.services.generators.commons.helper.GeneratedClassWriter.writeClass;
 
 import uk.gov.justice.raml.core.Generator;
 import uk.gov.justice.raml.core.GeneratorConfig;
 import uk.gov.justice.raml.jms.interceptor.EventFilterInterceptorCodeGenerator;
 import uk.gov.justice.raml.jms.validator.BaseUriRamlValidator;
+import uk.gov.justice.services.generators.commons.config.GeneratorPropertyParser;
 import uk.gov.justice.services.generators.commons.helper.MessagingAdapterBaseUri;
 import uk.gov.justice.services.generators.commons.mapping.MediaTypeToSchemaIdGenerator;
 import uk.gov.justice.services.generators.commons.validator.CompositeRamlValidator;
@@ -55,36 +55,44 @@ public class JmsEndpointGenerator implements Generator {
     @Override
     public void run(final Raml raml, final GeneratorConfig configuration) {
 
+        final GeneratorPropertyParser generatorPropertyParser = new GeneratorPropertyParser(configuration);
+        final String basePackageName = configuration.getBasePackageName();
+
         validator.validate(raml);
 
         raml.getResources().values().stream()
                 .filter(resource -> resource.getAction(POST) != null)
-                .flatMap(resource -> generatedClassesFrom(raml, resource, configuration))
-                .forEach(generatedClass -> writeClass(configuration, configuration.getBasePackageName(), generatedClass, LOGGER));
+                .flatMap(resource -> generatedClassesFrom(raml, resource, generatorPropertyParser, basePackageName))
+                .forEach(generatedClass -> {
+                    writeClass(configuration, basePackageName, generatedClass, LOGGER);
+                });
 
         mediaTypeToSchemaIdGenerator.generateMediaTypeToSchemaIdMapper(raml, configuration);
     }
 
-    private Stream<TypeSpec> generatedClassesFrom(final Raml raml, final Resource resource, final GeneratorConfig configuration) {
+    private Stream<TypeSpec> generatedClassesFrom(final Raml raml,
+                                                  final Resource resource,
+                                                  final GeneratorPropertyParser generatorPropertyParser,
+                                                  final String basePackageName) {
         final Stream.Builder<TypeSpec> streamBuilder = Stream.builder();
         final MessagingAdapterBaseUri baseUri = new MessagingAdapterBaseUri(raml.getBaseUri());
 
         //TODO: This should be processed where it is required, rather than passed through many method calls
         final boolean listenToAllMessages = shouldListenToAllMessages(resource, baseUri);
 
-        streamBuilder.add(messageListenerCodeGenerator.generatedCodeFor(resource, baseUri, listenToAllMessages, configuration));
+        streamBuilder.add(messageListenerCodeGenerator.generatedCodeFor(resource, baseUri, listenToAllMessages, generatorPropertyParser));
 
         if (shouldGenerateEventFilter(resource, baseUri)) {
             final TypeSpec eventFilterTypeSpec = eventFilterCodeGenerator.generatedCodeFor(resource, baseUri);
             final String eventFilterClassName = eventFilterTypeSpec.name;
-            final ClassName className = ClassName.get(configuration.getBasePackageName(), eventFilterClassName);
+            final ClassName className = ClassName.get(basePackageName, eventFilterClassName);
 
             streamBuilder.add(eventFilterTypeSpec);
 
             // generate the EventFilterInterceptor here
             final TypeSpec eventFilterInterceptor = eventFilterInterceptorCodeGenerator.generate(
                     className,
-                    serviceComponentOf(configuration));
+                    generatorPropertyParser.serviceComponent());
 
             streamBuilder.add(eventFilterInterceptor);
         }
