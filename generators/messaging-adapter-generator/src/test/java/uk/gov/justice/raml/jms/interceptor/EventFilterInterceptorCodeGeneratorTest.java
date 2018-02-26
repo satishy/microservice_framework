@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 import uk.gov.justice.services.core.interceptor.Interceptor;
 import uk.gov.justice.services.core.interceptor.InterceptorChain;
 import uk.gov.justice.services.core.interceptor.InterceptorContext;
-import uk.gov.justice.services.event.buffer.api.EventFilter;
 import uk.gov.justice.services.messaging.JsonEnvelope;
 import uk.gov.justice.services.messaging.Metadata;
 import uk.gov.justice.services.test.utils.core.compiler.JavaCompilerUtil;
@@ -23,7 +22,6 @@ import com.squareup.javapoet.TypeSpec;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -35,7 +33,7 @@ public class EventFilterInterceptorCodeGeneratorTest {
     private EventFilterInterceptorCodeGenerator eventFilterInterceptorCodeGenerator;
 
     @Test
-    public void shouldGenerateAWokingEventFilterInterceptorThatUsesACustomEventFilter() throws Exception {
+    public void shouldGenerateAWorkingEventFilterInterceptorThatUsesACustomEventFilter() throws Exception {
 
         final String componentName = "MY_CUSTOM_EVENT_LISTENER";
 
@@ -58,7 +56,6 @@ public class EventFilterInterceptorCodeGeneratorTest {
 
         nowTestTheGeneratedClass(compiledClass);
         nowTestTheFailureCase(compiledClass);
-
     }
 
     private void nowTestTheGeneratedClass(final Class<?> generatedClass) throws Exception {
@@ -128,19 +125,5 @@ public class EventFilterInterceptorCodeGeneratorTest {
         outputDirectory.mkdirs();
 
         return outputDirectory;
-    }
-
-    public static class MyCustomEventFilter implements EventFilter {
-
-        private final String eventName;
-
-        public MyCustomEventFilter(final String eventName) {
-            this.eventName = eventName;
-        }
-
-        @Override
-        public boolean accepts(final String eventName) {
-            return this.eventName.equals(eventName);
-        }
     }
 }

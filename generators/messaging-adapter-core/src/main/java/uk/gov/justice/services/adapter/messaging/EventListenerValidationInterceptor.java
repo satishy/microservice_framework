@@ -8,6 +8,7 @@ import javax.inject.Inject;
 import javax.jms.JMSException;
 import javax.jms.TextMessage;
 
+// TODO: Remove me
 public class EventListenerValidationInterceptor extends JsonSchemaValidationInterceptor {
 
     @Inject

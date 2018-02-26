@@ -3,17 +3,15 @@ package uk.gov.justice.raml.jms.interceptor;
 import static com.squareup.javapoet.ClassName.get;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static javax.lang.model.element.Modifier.FINAL;
-import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
+import static uk.gov.justice.raml.jms.interceptor.EventFilterConstants.FIELD_NAME;
+import static uk.gov.justice.raml.jms.interceptor.EventFilterConstants.PACKAGE_NAME;
 
 import uk.gov.justice.services.core.interceptor.Interceptor;
 import uk.gov.justice.services.core.interceptor.InterceptorChain;
 import uk.gov.justice.services.core.interceptor.InterceptorContext;
 
-import javax.inject.Inject;
-
 import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
@@ -24,7 +22,7 @@ import com.squareup.javapoet.TypeSpec;
  *
  *     public class MyCustomEventFilterInterceptor implements Interceptor {
  *
- *         @Inject
+ *         &#64;Inject
  *         private MyCustomEventFilter eventFilter;
  *
  *         public InterceptorContext process(final InterceptorContext interceptorContext, final InterceptorChain interceptorChain) {
@@ -42,10 +40,11 @@ import com.squareup.javapoet.TypeSpec;
  */
 public class EventFilterInterceptorCodeGenerator {
 
-    private static final String PACKAGE_NAME = "uk.gov.justice.api.interceptor.filter";
-    private static final String FIELD_NAME = "eventFilter";
 
-    private final ListenerInterceptorClassNameGenerator listenerInterceptorClassNameGenerator = new ListenerInterceptorClassNameGenerator();
+    private static final String CLASS_NAME_SUFFIX = "EventFilterInterceptor";
+
+    private final EventListenerGeneratedClassesNameGenerator eventListenerGeneratedClassesNameGenerator = new EventListenerGeneratedClassesNameGenerator();
+    private final EventFilterFieldCodeGenerator eventFilterFieldCodeGenerator = new EventFilterFieldCodeGenerator();
 
     
     /**
@@ -57,21 +56,16 @@ public class EventFilterInterceptorCodeGenerator {
      */
     public TypeSpec generate(final ClassName eventFilterClassName, final String componentName) {
 
-        final ClassName eventListenerInterceptorClassName = listenerInterceptorClassNameGenerator.interceptorNameFrom(
+        final ClassName eventListenerInterceptorClassName = eventListenerGeneratedClassesNameGenerator.interceptorNameFrom(
                 componentName,
+                CLASS_NAME_SUFFIX,
                 PACKAGE_NAME);
 
         return classBuilder(eventListenerInterceptorClassName)
                 .addModifiers(PUBLIC)
                 .addSuperinterface(Interceptor.class)
-                .addField(createEventFilterField(eventFilterClassName))
+                .addField(eventFilterFieldCodeGenerator.createEventFilterField(eventFilterClassName))
                 .addMethod(createProcessMethod())
-                .build();
-    }
-
-    private FieldSpec createEventFilterField(final ClassName eventFilterClassName) {
-        return FieldSpec.builder(eventFilterClassName, FIELD_NAME, PRIVATE)
-                .addAnnotation(Inject.class)
                 .build();
     }
 

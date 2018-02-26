@@ -10,21 +10,23 @@ import org.mockito.InjectMocks;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ListenerInterceptorClassNameGeneratorTest {
+public class EventListenerGeneratedClassesNameGeneratorTest {
 
     @InjectMocks
-    private ListenerInterceptorClassNameGenerator listenerInterceptorClassNameGenerator;
+    private EventListenerGeneratedClassesNameGenerator eventListenerGeneratedClassesNameGenerator;
 
     @Test
     public void shouldGenerateAnInterceptorNameFromAComponentNameWithEventListenerAtTheEnd() throws Exception {
 
         final String packageName = "uk.gov.justice.api.interceptor.filter";
+        final String classNameSuffix = "EventFilterInterceptor";
         final String eventListenerComponentName = "MY_CUSTOM_EVENT_LISTENER";
 
-        final ClassName className = listenerInterceptorClassNameGenerator.interceptorNameFrom(
+        final ClassName className = eventListenerGeneratedClassesNameGenerator.interceptorNameFrom(
                 eventListenerComponentName,
+                classNameSuffix,
                 packageName);
-        
+
         assertThat(className.toString(), is("uk.gov.justice.api.interceptor.filter.MyCustomEventFilterInterceptor"));
     }
 
@@ -32,10 +34,12 @@ public class ListenerInterceptorClassNameGeneratorTest {
     public void shouldGenerateAnInterceptorNameFromAComponentNameWithEventListenerAtTheStart() throws Exception {
 
         final String packageName = "uk.gov.justice.bloggs.fred.filter";
+        final String classNameSuffix = "EventFilterInterceptor";
         final String eventListenerComponentName = "EVENT_LISTENER_CUSTOM";
 
-        final ClassName className = listenerInterceptorClassNameGenerator.interceptorNameFrom(
+        final ClassName className = eventListenerGeneratedClassesNameGenerator.interceptorNameFrom(
                 eventListenerComponentName,
+                classNameSuffix,
                 packageName);
 
         assertThat(className.toString(), is("uk.gov.justice.bloggs.fred.filter.CustomEventFilterInterceptor"));
@@ -45,10 +49,12 @@ public class ListenerInterceptorClassNameGeneratorTest {
     public void shouldGenerateAnInterceptorNameFromAComponentNameWithEventListenerInTheMiddle() throws Exception {
 
         final String packageName = "uk.gov.justice.api.interceptor.filter";
+        final String classNameSuffix = "EventFilterInterceptor";
         final String eventListenerComponentName = "MY_CUSTOM_EVENT_LISTENER_NAME";
 
-        final ClassName className = listenerInterceptorClassNameGenerator.interceptorNameFrom(
+        final ClassName className = eventListenerGeneratedClassesNameGenerator.interceptorNameFrom(
                 eventListenerComponentName,
+                classNameSuffix,
                 packageName);
 
         assertThat(className.toString(), is("uk.gov.justice.api.interceptor.filter.MyCustomNameEventFilterInterceptor"));

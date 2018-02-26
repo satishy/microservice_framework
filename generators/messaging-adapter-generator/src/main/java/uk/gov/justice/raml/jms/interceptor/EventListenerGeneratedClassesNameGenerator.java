@@ -13,7 +13,7 @@ import com.squareup.javapoet.ClassName;
  * 'MY_CUSTOM_EVENT_LISTENER' and a package of 'org.acme' the resuting class name would be
  * 'org.acme.MyCustomEventFilterInterceptor'
  */
-public class ListenerInterceptorClassNameGenerator {
+public class EventListenerGeneratedClassesNameGenerator {
 
     /**
      * Generate a name for a custom EventFilterInterceptor
@@ -23,7 +23,7 @@ public class ListenerInterceptorClassNameGenerator {
      * @param packageName The package of the custom EventFilterInterceptor
      * @return
      */
-    public ClassName interceptorNameFrom(final String eventListenerComponentName, final String packageName) {
+    public ClassName interceptorNameFrom(final String eventListenerComponentName, final String classNameSuffix, final String packageName) {
 
         final String choppedName = eventListenerComponentName.replace("EVENT_LISTENER", "");
 
@@ -31,7 +31,7 @@ public class ListenerInterceptorClassNameGenerator {
         .map(token -> capitalize(token.toLowerCase()))
         .collect(joining());
 
-        final String simpleName = format("%sEventFilterInterceptor", name);
+        final String simpleName = name + classNameSuffix;
 
         return get(packageName, simpleName);
     }
