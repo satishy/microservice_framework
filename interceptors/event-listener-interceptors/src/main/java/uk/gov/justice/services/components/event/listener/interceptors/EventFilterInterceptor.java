@@ -15,8 +15,10 @@ public class EventFilterInterceptor implements Interceptor {
 
     @Override
     public InterceptorContext process(final InterceptorContext interceptorContext, final InterceptorChain interceptorChain) {
-        return filter.accepts(interceptorContext.inputEnvelope().metadata().name())
-                ? interceptorChain.processNext(interceptorContext)
-                : interceptorContext;
+        if(filter.accepts(interceptorContext.inputEnvelope().metadata().name())) {
+            return interceptorChain.processNext(interceptorContext);
+        }
+
+        return interceptorContext;
     }
 }
