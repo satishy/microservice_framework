@@ -64,6 +64,8 @@ public class JmsEndpointGenerator implements Generator {
     private Stream<TypeSpec> generatedClassesFrom(final Raml raml, final Resource resource, final GeneratorConfig configuration) {
         final Stream.Builder<TypeSpec> streamBuilder = Stream.builder();
         final MessagingAdapterBaseUri baseUri = new MessagingAdapterBaseUri(raml.getBaseUri());
+
+        //TODO: This should be processed where it is required, rather than passed through many method calls
         final boolean listenToAllMessages = shouldListenToAllMessages(resource, baseUri);
 
         streamBuilder.add(messageListenerCodeGenerator.generatedCodeFor(resource, baseUri, listenToAllMessages, configuration));

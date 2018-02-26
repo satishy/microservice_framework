@@ -11,6 +11,7 @@ import static org.junit.Assert.assertThat;
 import static uk.gov.justice.services.core.annotation.Component.EVENT_LISTENER;
 import static uk.gov.justice.services.messaging.jms.HeaderConstants.JMS_HEADER_CPPNAME;
 
+import uk.gov.justice.api.CustomEventListenerPeopleEventJmsListener;
 import uk.gov.justice.api.Service2EventListenerEventFilter;
 import uk.gov.justice.api.Service2EventListenerPeopleEventJmsListener;
 import uk.gov.justice.services.adapter.messaging.DefaultJmsParameterChecker;

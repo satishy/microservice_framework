@@ -329,6 +329,24 @@ public class JmsEndpointGeneratorTest extends BaseGeneratorTest {
     }
 
     @Test
+    public void shouldCreateJmsEndpointAnnotatedWithCustomEventListenerAdapter() throws Exception {
+        generator.run(
+                raml()
+                        .withBaseUri("message://event/listener/message/custom")
+                        .with(resource()
+                                .withRelativeUri("/people.event")
+                                .with(httpAction(POST, "application/vnd.people.abc+json")))
+                        .build(),
+                configurationWithBasePackage(BASE_PACKAGE, outputFolder, generatorProperties().withServiceComponentOf("CUSTOM_EVENT_LISTENER").build()));
+
+        Class<?> clazz = compiler.compiledClassOf(BASE_PACKAGE, "CustomEventListenerPeopleEventJmsListener");
+        Adapter adapterAnnotation = clazz.getAnnotation(Adapter.class);
+        assertThat(adapterAnnotation, not(nullValue()));
+        assertThat(adapterAnnotation.value(), is("CUSTOM_EVENT_LISTENER"));
+
+    }
+
+    @Test
     public void shouldCreateJmsEndpointAnnotatedWithEventProcessorAdapter() throws Exception {
         generator.run(
                 raml()
