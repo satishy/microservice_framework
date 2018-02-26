@@ -3,10 +3,12 @@ package uk.gov.justice.raml.jms.core;
 import static org.raml.model.ActionType.POST;
 import static uk.gov.justice.raml.jms.core.JmsEndPointGeneratorUtil.shouldGenerateEventFilter;
 import static uk.gov.justice.raml.jms.core.JmsEndPointGeneratorUtil.shouldListenToAllMessages;
+import static uk.gov.justice.services.generators.commons.config.GeneratorProperties.serviceComponentOf;
 import static uk.gov.justice.services.generators.commons.helper.GeneratedClassWriter.writeClass;
 
 import uk.gov.justice.raml.core.Generator;
 import uk.gov.justice.raml.core.GeneratorConfig;
+import uk.gov.justice.raml.jms.interceptor.EventFilterInterceptorCodeGenerator;
 import uk.gov.justice.raml.jms.validator.BaseUriRamlValidator;
 import uk.gov.justice.services.generators.commons.helper.MessagingAdapterBaseUri;
 import uk.gov.justice.services.generators.commons.mapping.MediaTypeToSchemaIdGenerator;
@@ -18,6 +20,7 @@ import uk.gov.justice.services.generators.commons.validator.RequestContentTypeRa
 
 import java.util.stream.Stream;
 
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeSpec;
 import org.raml.model.Raml;
 import org.raml.model.Resource;
@@ -33,6 +36,7 @@ public class JmsEndpointGenerator implements Generator {
     private final MessageListenerCodeGenerator messageListenerCodeGenerator = new MessageListenerCodeGenerator();
     private final EventFilterCodeGenerator eventFilterCodeGenerator = new EventFilterCodeGenerator();
     private final MediaTypeToSchemaIdGenerator mediaTypeToSchemaIdGenerator = new MediaTypeToSchemaIdGenerator();
+    private final EventFilterInterceptorCodeGenerator eventFilterInterceptorCodeGenerator = new EventFilterInterceptorCodeGenerator();
 
     private final RamlValidator validator = new CompositeRamlValidator(
             new ContainsResourcesRamlValidator(),
@@ -70,13 +74,19 @@ public class JmsEndpointGenerator implements Generator {
 
         streamBuilder.add(messageListenerCodeGenerator.generatedCodeFor(resource, baseUri, listenToAllMessages, configuration));
 
-        if(shouldGenerateEventFilter(resource, baseUri)) {
+        if (shouldGenerateEventFilter(resource, baseUri)) {
             final TypeSpec eventFilterTypeSpec = eventFilterCodeGenerator.generatedCodeFor(resource, baseUri);
             final String eventFilterClassName = eventFilterTypeSpec.name;
+            final ClassName className = ClassName.get(configuration.getBasePackageName(), eventFilterClassName);
+
             streamBuilder.add(eventFilterTypeSpec);
 
-            //TODO: Other generation steps to go here
+            // generate the EventFilterInterceptor here
+            final TypeSpec eventFilterInterceptor = eventFilterInterceptorCodeGenerator.generate(
+                    className,
+                    serviceComponentOf(configuration));
 
+            streamBuilder.add(eventFilterInterceptor);
         }
 
         return streamBuilder.build();

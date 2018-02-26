@@ -45,9 +45,9 @@ public class EventFilterInterceptorCodeGenerator {
     private static final String PACKAGE_NAME = "uk.gov.justice.api.interceptor.filter";
     private static final String FIELD_NAME = "eventFilter";
 
-    @Inject
-    ListenerInterceptorClassNameGenerator listenerInterceptorClassNameGenerator;
+    private final ListenerInterceptorClassNameGenerator listenerInterceptorClassNameGenerator = new ListenerInterceptorClassNameGenerator();
 
+    
     /**
      * Generate a custom EventFilterInterceptor which uses a custom {@see uk.gov.justice.services.event.buffer.api.EventFilter}
      *

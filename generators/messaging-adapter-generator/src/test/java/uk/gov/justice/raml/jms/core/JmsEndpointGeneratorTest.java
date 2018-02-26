@@ -149,10 +149,11 @@ public class JmsEndpointGeneratorTest extends BaseGeneratorTest {
                 configurationWithBasePackage(BASE_PACKAGE, outputFolder, generatorProperties));
 
         File packageDir = new File(outputFolder.getRoot().getAbsolutePath() + BASE_PACKAGE_FOLDER);
-        assertThat(asList(packageDir.listFiles()),
+        final File[] a = packageDir.listFiles();
+        assertThat(asList(a),
                 hasItems(hasProperty("name", equalTo("ContextEventProcessorPeopleControllerCommandJmsListener.java")),
-                        hasProperty("name", equalTo("ContextEventProcessorStructureControllerCommandJmsListener.java"))));
-
+                        hasProperty("name", equalTo("ContextEventProcessorStructureControllerCommandJmsListener.java"))
+                ));
     }
 
     @Test
@@ -344,6 +345,11 @@ public class JmsEndpointGeneratorTest extends BaseGeneratorTest {
         assertThat(adapterAnnotation, not(nullValue()));
         assertThat(adapterAnnotation.value(), is("CUSTOM_EVENT_LISTENER"));
 
+        final Class<?> customEventFilterInterceptor = compiler.compiledClassOf(BASE_PACKAGE, "CustomEventFilterInterceptor");
+        final Field eventFilter = customEventFilterInterceptor.getDeclaredField("eventFilter");
+        final Class<?> customEventFilterClass = eventFilter.getType();
+
+        assertThat(customEventFilterClass.getName(), is("uk.test.CustomEventListenerEventFilter"));
     }
 
     @Test

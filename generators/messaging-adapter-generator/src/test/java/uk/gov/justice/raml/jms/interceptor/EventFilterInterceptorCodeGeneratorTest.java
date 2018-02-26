@@ -26,14 +26,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-
 @RunWith(MockitoJUnitRunner.class)
 public class EventFilterInterceptorCodeGeneratorTest {
 
     private static final File COMPILATION_OUTPUT_DIRECTORY = new File(System.getProperty("java.io.tmpdir"));
-
-    @Mock
-    private ListenerInterceptorClassNameGenerator listenerInterceptorClassNameGenerator;
 
     @InjectMocks
     private EventFilterInterceptorCodeGenerator eventFilterInterceptorCodeGenerator;
@@ -46,16 +42,7 @@ public class EventFilterInterceptorCodeGeneratorTest {
         final String packageName = "uk.gov.justice.api.interceptor.filter";
         final String simpleName = "MyCustomEventFilterInterceptor";
 
-        final ClassName eventInterceptorClassName = get(
-                packageName,
-                simpleName);
-
         final ClassName eventFilterClassName = get(MyCustomEventFilter.class);
-
-        when(listenerInterceptorClassNameGenerator.interceptorNameFrom(
-                componentName,
-                packageName))
-                .thenReturn(eventInterceptorClassName);
 
         final TypeSpec typeSpec = eventFilterInterceptorCodeGenerator.generate(
                 eventFilterClassName,
