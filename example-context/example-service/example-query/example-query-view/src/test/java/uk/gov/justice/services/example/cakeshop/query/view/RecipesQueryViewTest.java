@@ -3,8 +3,10 @@ package uk.gov.justice.services.example.cakeshop.query.view;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.withJsonPath;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.allOf;
+import static org.mockito.Mockito.mock;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
@@ -19,16 +21,22 @@ import static uk.gov.justice.services.test.utils.core.matchers.JsonValueNullMatc
 import static uk.gov.justice.services.test.utils.core.messaging.JsonEnvelopeBuilder.envelope;
 import static uk.gov.justice.services.test.utils.core.messaging.MetadataBuilderFactory.metadataWithDefaults;
 
+import uk.gov.justice.services.common.converter.ObjectToJsonValueConverter;
 import uk.gov.justice.services.core.enveloper.Enveloper;
 import uk.gov.justice.services.example.cakeshop.query.view.response.PhotoView;
 import uk.gov.justice.services.example.cakeshop.query.view.response.RecipeView;
 import uk.gov.justice.services.example.cakeshop.query.view.response.RecipesView;
 import uk.gov.justice.services.example.cakeshop.query.view.service.RecipeService;
 import uk.gov.justice.services.messaging.JsonEnvelope;
+import uk.gov.justice.services.messaging.spi.DefaultEnvelopeBuilderProvider;
+import uk.gov.justice.services.messaging.spi.EnvelopeBuilderProvider;
 import uk.gov.justice.services.test.utils.core.enveloper.EnveloperFactory;
 
 import java.util.Optional;
 import java.util.UUID;
+
+import javax.json.Json;
+import javax.json.JsonObjectBuilder;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,6 +50,22 @@ public class RecipesQueryViewTest {
 
     @Spy
     private Enveloper enveloper = new EnveloperFactory().create();
+
+//    @Spy
+//    EnvelopeBuilderProvider envelopeBuilderProvider = new DefaultEnvelopeBuilderProvider();
+
+
+/*
+    @InjectMocks
+    EnvelopeBuilderProvider envelopeBuilderProvider = new DefaultEnvelopeBuilderProvider();
+*/
+
+    @Mock
+    ObjectToJsonValueConverter objectToJsonValueConverter;
+//    @Mock
+//    private JsonObjectBuilder jsonObjectBuilder;
+
+
 
     @Mock
     private RecipeService service;
@@ -64,6 +88,18 @@ public class RecipesQueryViewTest {
         final UUID recipeId = UUID.randomUUID();
         final String recipeName = "some recipe name";
         when(service.findRecipe(recipeId.toString())).thenReturn(new RecipeView(recipeId, recipeName, false));
+
+
+
+/*
+        JsonObjectBuilder jsonObjectBuilder = mock(JsonObjectBuilder.class);
+        when(objectToJsonValueConverter.convert("")).thenReturn(jsonObjectBuilder.build());
+*/
+
+        final JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder();
+        jsonObjectBuilder.add("key", "value");
+
+        when(objectToJsonValueConverter.convert("")).thenReturn(jsonObjectBuilder.build());
 
         final JsonEnvelope response = queryView.findRecipe(
                 envelope().with(metadataWithDefaults())

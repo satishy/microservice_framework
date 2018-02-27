@@ -3,6 +3,7 @@ package uk.gov.justice.services.example.cakeshop.query.view;
 import static org.slf4j.LoggerFactory.getLogger;
 import static uk.gov.justice.services.messaging.JsonObjects.getBoolean;
 import static uk.gov.justice.services.messaging.JsonObjects.getString;
+import static uk.gov.justice.services.messaging.spi.EnvelopeBuilderProvider.provider;
 
 import uk.gov.justice.services.core.annotation.Component;
 import uk.gov.justice.services.core.annotation.Handles;
@@ -13,6 +14,7 @@ import uk.gov.justice.services.example.cakeshop.query.view.response.RecipeView;
 import uk.gov.justice.services.example.cakeshop.query.view.response.RecipesView;
 import uk.gov.justice.services.example.cakeshop.query.view.service.RecipeService;
 import uk.gov.justice.services.messaging.JsonEnvelope;
+import uk.gov.justice.services.messaging.spi.EnvelopeBuilderProvider;
 
 import javax.inject.Inject;
 import javax.json.JsonObject;
@@ -34,14 +36,26 @@ public class RecipesQueryView {
     private final RecipeService recipeService;
     private final Enveloper enveloper;
 
+
     @Inject
     public RecipesQueryView(RecipeService recipeService, Enveloper enveloper) {
         this.recipeService = recipeService;
         this.enveloper = enveloper;
     }
 
+
     @Handles("example.get-recipe")
     public JsonEnvelope findRecipe(final JsonEnvelope query) {
+        LOGGER.info("=============> Inside findRecipe Query View. RecipeId: " + query.payloadAsJsonObject().getString(FIELD_RECIPE_ID));
+
+        final RecipeView recipe = recipeService.findRecipe(query.payloadAsJsonObject().getString(FIELD_RECIPE_ID));
+
+        return provider().withMetadataFrom(query, NAME_RESPONSE_RECIPE).apply(recipe);
+    }
+
+
+    @Handles("example.get-recipe")
+    public JsonEnvelope findRecipeOld(final JsonEnvelope query) {
         LOGGER.info("=============> Inside findRecipe Query View. RecipeId: " + query.payloadAsJsonObject().getString(FIELD_RECIPE_ID));
 
         final RecipeView recipe = recipeService.findRecipe(query.payloadAsJsonObject().getString(FIELD_RECIPE_ID));
