@@ -2,13 +2,14 @@ package uk.gov.justice.raml.jms.core;
 
 import static org.raml.model.ActionType.POST;
 import static uk.gov.justice.raml.jms.core.JmsEndPointGeneratorUtil.shouldGenerateEventFilter;
-import static uk.gov.justice.raml.jms.core.JmsEndPointGeneratorUtil.shouldListenToAllMessages;
 import static uk.gov.justice.services.generators.commons.helper.GeneratedClassWriter.writeClass;
 
 import uk.gov.justice.raml.core.Generator;
 import uk.gov.justice.raml.core.GeneratorConfig;
 import uk.gov.justice.raml.jms.interceptor.EventFilterInterceptorCodeGenerator;
+import uk.gov.justice.raml.jms.interceptor.EventValidationInterceptorCodeGenerator;
 import uk.gov.justice.raml.jms.validator.BaseUriRamlValidator;
+import uk.gov.justice.services.adapter.messaging.JsonSchemaValidationInterceptor;
 import uk.gov.justice.services.generators.commons.config.GeneratorPropertyParser;
 import uk.gov.justice.services.generators.commons.helper.MessagingAdapterBaseUri;
 import uk.gov.justice.services.generators.commons.mapping.MediaTypeToSchemaIdGenerator;
@@ -37,6 +38,7 @@ public class JmsEndpointGenerator implements Generator {
     private final EventFilterCodeGenerator eventFilterCodeGenerator = new EventFilterCodeGenerator();
     private final MediaTypeToSchemaIdGenerator mediaTypeToSchemaIdGenerator = new MediaTypeToSchemaIdGenerator();
     private final EventFilterInterceptorCodeGenerator eventFilterInterceptorCodeGenerator = new EventFilterInterceptorCodeGenerator();
+    private final EventValidationInterceptorCodeGenerator eventValidationInterceptorCodeGenerator = new EventValidationInterceptorCodeGenerator();
 
     private final RamlValidator validator = new CompositeRamlValidator(
             new ContainsResourcesRamlValidator(),
@@ -74,28 +76,46 @@ public class JmsEndpointGenerator implements Generator {
                                                   final Resource resource,
                                                   final GeneratorPropertyParser generatorPropertyParser,
                                                   final String basePackageName) {
+
         final Stream.Builder<TypeSpec> streamBuilder = Stream.builder();
+
         final MessagingAdapterBaseUri baseUri = new MessagingAdapterBaseUri(raml.getBaseUri());
-
-        //TODO: This should be processed where it is required, rather than passed through many method calls
-        final boolean listenToAllMessages = shouldListenToAllMessages(resource, baseUri);
-
-        streamBuilder.add(messageListenerCodeGenerator.generatedCodeFor(resource, baseUri, listenToAllMessages, generatorPropertyParser));
+        final ClassName validationClassName;
 
         if (shouldGenerateEventFilter(resource, baseUri)) {
+
+
             final TypeSpec eventFilterTypeSpec = eventFilterCodeGenerator.generatedCodeFor(resource, baseUri);
-            final String eventFilterClassName = eventFilterTypeSpec.name;
-            final ClassName className = ClassName.get(basePackageName, eventFilterClassName);
+            final ClassName eventFilterClassName = ClassName.get(basePackageName, eventFilterTypeSpec.name);
 
             streamBuilder.add(eventFilterTypeSpec);
 
             // generate the EventFilterInterceptor here
             final TypeSpec eventFilterInterceptor = eventFilterInterceptorCodeGenerator.generate(
-                    className,
+                    eventFilterClassName,
                     generatorPropertyParser.serviceComponent());
 
             streamBuilder.add(eventFilterInterceptor);
+
+            final TypeSpec eventValidationInterceptor = eventValidationInterceptorCodeGenerator.generate(
+                    eventFilterClassName,
+                    generatorPropertyParser.serviceComponent());
+
+            streamBuilder.add(eventValidationInterceptor);
+            
+            validationClassName = ClassName.get(basePackageName, eventValidationInterceptor.name);
+
+        } else {
+            validationClassName = ClassName.get(JsonSchemaValidationInterceptor.class);
         }
+
+        final TypeSpec messageListenerTypeSpec = messageListenerCodeGenerator.generatedCodeFor(
+                resource,
+                baseUri,
+                generatorPropertyParser,
+                validationClassName);
+
+        streamBuilder.add(messageListenerTypeSpec);
 
         return streamBuilder.build();
     }

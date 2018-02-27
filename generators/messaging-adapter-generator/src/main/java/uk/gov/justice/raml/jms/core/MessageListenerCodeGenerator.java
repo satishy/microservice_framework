@@ -6,15 +6,13 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
-import static uk.gov.justice.raml.jms.core.JmsEndPointGeneratorUtil.shouldGenerateEventFilter;
+import static uk.gov.justice.raml.jms.core.JmsEndPointGeneratorUtil.shouldListenToAllMessages;
 import static uk.gov.justice.raml.jms.core.MediaTypesUtil.containsGeneralJsonMimeType;
 import static uk.gov.justice.raml.jms.core.MediaTypesUtil.mediaTypesFrom;
 import static uk.gov.justice.services.generators.commons.helper.Names.namesListStringFrom;
 
-import uk.gov.justice.services.adapter.messaging.EventListenerValidationInterceptor;
 import uk.gov.justice.services.adapter.messaging.JmsLoggerMetadataInterceptor;
 import uk.gov.justice.services.adapter.messaging.JmsProcessor;
-import uk.gov.justice.services.adapter.messaging.JsonSchemaValidationInterceptor;
 import uk.gov.justice.services.core.annotation.Adapter;
 import uk.gov.justice.services.core.interceptor.InterceptorChainProcessor;
 import uk.gov.justice.services.generators.commons.config.GeneratorPropertyParser;
@@ -74,15 +72,17 @@ class MessageListenerCodeGenerator {
     /**
      * Create an implementation of the {@link MessageListener}.
      *
-     * @param resource the resource definition this listener is being generated for
-     * @param baseUri  the base URI
+     * @param resource                       the resource definition this listener is being generated for
+     * @param baseUri                        the base URI
+     * @param generatorPropertyParser        used to query the generator properties
+     * @param validationInterceptorClassName the validation interceptor class name
      * @return the message listener class specification
      */
     TypeSpec generatedCodeFor(final Resource resource,
                               final MessagingAdapterBaseUri baseUri,
-                              final boolean listenToAllMessages,
-                              final GeneratorPropertyParser generatorPropertyParser) {
-        return classSpecFrom(resource, baseUri, listenToAllMessages, generatorPropertyParser)
+                              final GeneratorPropertyParser generatorPropertyParser,
+                              final ClassName validationInterceptorClassName) {
+        return classSpecFrom(resource, baseUri, generatorPropertyParser, validationInterceptorClassName)
                 .addMethod(generateOnMessageMethod())
                 .build();
     }
@@ -90,55 +90,59 @@ class MessageListenerCodeGenerator {
     /**
      * Generate the @link MessageListener} class implementation.
      *
-     * @param resource                the resource definition this listener is being generated for
-     * @param baseUri                 the base URI
-     * @param generatorPropertyParser generator generatorConfiguration
+     * @param resource                       the resource definition this listener is being generated for
+     * @param baseUri                        the base URI
+     * @param generatorPropertyParser        used to query the generator properties
+     * @param validationInterceptorClassName the validation interceptor class name
      * @return the {@link TypeSpec.Builder} that defines the class
      */
     private TypeSpec.Builder classSpecFrom(final Resource resource,
                                            final MessagingAdapterBaseUri baseUri,
-                                           final boolean listenToAllMessages,
-                                           final GeneratorPropertyParser generatorPropertyParser) {
-        final MessagingResourceUri resourceUri = new MessagingResourceUri(resource.getUri());
+                                           final GeneratorPropertyParser generatorPropertyParser,
+                                           final ClassName validationInterceptorClassName) {
+
         final String serviceComponent = generatorPropertyParser.serviceComponent();
 
-        final TypeSpec.Builder typeSpecBuilder = classBuilder(classNameOf(baseUri, resourceUri))
-                .addModifiers(PUBLIC)
-                .addSuperinterface(MessageListener.class)
-                .addField(FieldSpec.builder(ClassName.get(Logger.class), LOGGER_FIELD)
-                        .addModifiers(PRIVATE, STATIC, FINAL)
-                        .initializer("$T.getLogger($L.class)", LoggerFactory.class, classNameOf(baseUri, resourceUri))
-                        .build())
-                .addField(FieldSpec.builder(ClassName.get(InterceptorChainProcessor.class), INTERCEPTOR_CHAIN_PROCESS)
-                        .addAnnotation(Inject.class)
-                        .build())
-                .addField(FieldSpec.builder(ClassName.get(JmsProcessor.class), JMS_PROCESSOR_FIELD)
-                        .addAnnotation(Inject.class)
-                        .build())
-                .addAnnotation(AnnotationSpec.builder(Adapter.class)
-                        .addMember(DEFAULT_ANNOTATION_PARAMETER, "$S", serviceComponent)
-                        .build())
-                .addAnnotation(messageDrivenAnnotation(serviceComponent, resource.getActions(), resourceUri, baseUri, listenToAllMessages));
+        if (componentDestinationType.isSupported(serviceComponent)) {
 
-        if (!containsGeneralJsonMimeType(resource.getActions())) {
-            AnnotationSpec.Builder builder = AnnotationSpec.builder(Interceptors.class)
-                    .addMember(DEFAULT_ANNOTATION_PARAMETER, CLASS_NAME, JmsLoggerMetadataInterceptor.class);
+            final MessagingResourceUri resourceUri = new MessagingResourceUri(resource.getUri());
 
-            if (shouldGenerateEventFilter(resource, baseUri)) {
-                builder = builder.addMember(DEFAULT_ANNOTATION_PARAMETER, CLASS_NAME, EventListenerValidationInterceptor.class);
-            } else {
-                builder = builder.addMember(DEFAULT_ANNOTATION_PARAMETER, CLASS_NAME, JsonSchemaValidationInterceptor.class);
+            final TypeSpec.Builder typeSpecBuilder = classBuilder(classNameOf(baseUri, resourceUri))
+                    .addModifiers(PUBLIC)
+                    .addSuperinterface(MessageListener.class)
+                    .addField(FieldSpec.builder(ClassName.get(Logger.class), LOGGER_FIELD)
+                            .addModifiers(PRIVATE, STATIC, FINAL)
+                            .initializer("$T.getLogger($L.class)", LoggerFactory.class, classNameOf(baseUri, resourceUri))
+                            .build())
+                    .addField(FieldSpec.builder(ClassName.get(InterceptorChainProcessor.class), INTERCEPTOR_CHAIN_PROCESS)
+                            .addAnnotation(Inject.class)
+                            .build())
+                    .addField(FieldSpec.builder(ClassName.get(JmsProcessor.class), JMS_PROCESSOR_FIELD)
+                            .addAnnotation(Inject.class)
+                            .build())
+                    .addAnnotation(AnnotationSpec.builder(Adapter.class)
+                            .addMember(DEFAULT_ANNOTATION_PARAMETER, "$S", serviceComponent)
+                            .build())
+                    .addAnnotation(messageDrivenAnnotation(serviceComponent, resource.getActions(), resourceUri, baseUri));
+
+            if (!containsGeneralJsonMimeType(resource.getActions())) {
+                AnnotationSpec.Builder builder = AnnotationSpec.builder(Interceptors.class)
+                        .addMember(DEFAULT_ANNOTATION_PARAMETER, CLASS_NAME, JmsLoggerMetadataInterceptor.class)
+                        .addMember(DEFAULT_ANNOTATION_PARAMETER, CLASS_NAME, validationInterceptorClassName);
+
+                typeSpecBuilder.addAnnotation(builder.build());
             }
-            typeSpecBuilder.addAnnotation(builder.build());
+
+            if (generatorPropertyParser.shouldAddCustomPoolConfiguration()) {
+                typeSpecBuilder.addAnnotation(AnnotationSpec.builder(Pool.class)
+                        .addMember(DEFAULT_ANNOTATION_PARAMETER, "$S", poolNameFrom(resourceUri, serviceComponent))
+                        .build());
+            }
+
+            return typeSpecBuilder;
         }
 
-        if (generatorPropertyParser.shouldAddCustomPoolConfiguration()) {
-            typeSpecBuilder.addAnnotation(AnnotationSpec.builder(Pool.class)
-                    .addMember(DEFAULT_ANNOTATION_PARAMETER, "$S", poolNameFrom(resourceUri, serviceComponent))
-                    .build());
-        }
-
-        return typeSpecBuilder;
+        throw new IllegalStateException(format("JMS Endpoint generation is unsupported for framework component type %s", serviceComponent));
     }
 
     private String poolNameFrom(final MessagingResourceUri resourceUri, final String component) {
@@ -179,7 +183,7 @@ class MessageListenerCodeGenerator {
     private AnnotationSpec messageDrivenAnnotation(final String component,
                                                    final Map<ActionType, Action> actions,
                                                    final MessagingResourceUri resourceUri,
-                                                   final MessagingAdapterBaseUri baseUri, final boolean listenToAllMessages) {
+                                                   final MessagingAdapterBaseUri baseUri) {
 
         final Class<? extends Destination> inputType = componentDestinationType.inputTypeFor(component);
 
@@ -191,15 +195,14 @@ class MessageListenerCodeGenerator {
                 .addMember(ACTIVATION_CONFIG_PARAMETER, "$L",
                         generateActivationConfigPropertyAnnotation(SHARE_SUBSCRIPTIONS, "true"));
 
-
-        if (!listenToAllMessages) {
+        if (!shouldListenToAllMessages(actions, baseUri)) {
             builder.addMember(ACTIVATION_CONFIG_PARAMETER, "$L",
                     generateActivationConfigPropertyAnnotation(MESSAGE_SELECTOR, messageSelectorsFrom(actions)));
         }
 
         if (Topic.class.equals(inputType)) {
             final String clientId = baseUri.adapterClientId();
-            builder = builder
+            builder
                     .addMember(ACTIVATION_CONFIG_PARAMETER, "$L",
                             generateActivationConfigPropertyAnnotation(SUBSCRIPTION_DURABILITY, DURABLE))
                     .addMember(ACTIVATION_CONFIG_PARAMETER, "$L",
