@@ -13,8 +13,9 @@ import uk.gov.justice.services.example.cakeshop.query.view.response.PhotoView;
 import uk.gov.justice.services.example.cakeshop.query.view.response.RecipeView;
 import uk.gov.justice.services.example.cakeshop.query.view.response.RecipesView;
 import uk.gov.justice.services.example.cakeshop.query.view.service.RecipeService;
+import uk.gov.justice.services.messaging.EnvelopeBuilder;
 import uk.gov.justice.services.messaging.JsonEnvelope;
-import uk.gov.justice.services.messaging.spi.EnvelopeBuilderProvider;
+import uk.gov.justice.services.messaging.spi.DefaultEnvelopeBuilderProvider;
 
 import javax.inject.Inject;
 import javax.json.JsonObject;
@@ -35,13 +36,17 @@ public class RecipesQueryView {
 
     private final RecipeService recipeService;
     private final Enveloper enveloper;
+    private final DefaultEnvelopeBuilderProvider defaultEnvelopeBuilderProvider;
 
 
     @Inject
-    public RecipesQueryView(RecipeService recipeService, Enveloper enveloper) {
+    public RecipesQueryView(RecipeService recipeService, Enveloper enveloper, DefaultEnvelopeBuilderProvider defaultEnvelopeBuilderProvider) {
         this.recipeService = recipeService;
         this.enveloper = enveloper;
+        this.defaultEnvelopeBuilderProvider = defaultEnvelopeBuilderProvider;
     }
+
+
 
 
     @Handles("example.get-recipe")
@@ -50,9 +55,9 @@ public class RecipesQueryView {
 
         final RecipeView recipe = recipeService.findRecipe(query.payloadAsJsonObject().getString(FIELD_RECIPE_ID));
 
-        return provider().withMetadataFrom(query, NAME_RESPONSE_RECIPE).apply(recipe);
+        return defaultEnvelopeBuilderProvider.withMetadataFrom(query, NAME_RESPONSE_RECIPE).apply(recipe);
+        /*return provider().withMetadataFrom(query, NAME_RESPONSE_RECIPE).apply(recipe);*/
     }
-
 
     @Handles("example.get-recipe")
     public JsonEnvelope findRecipeOld(final JsonEnvelope query) {

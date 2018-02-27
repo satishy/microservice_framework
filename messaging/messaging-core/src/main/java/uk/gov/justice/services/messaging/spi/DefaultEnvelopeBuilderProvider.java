@@ -37,8 +37,13 @@ public class DefaultEnvelopeBuilderProvider implements EnvelopeBuilderProvider {
 
     private ConcurrentHashMap<Class<?>, String> eventMap = new ConcurrentHashMap<>();
 
-    @Inject
     ObjectToJsonValueConverter objectToJsonValueConverter;
+
+    @Inject
+    public DefaultEnvelopeBuilderProvider(final Clock clock, final ObjectToJsonValueConverter objectToJsonValueConverter) {
+        this.clock = clock;
+        this.objectToJsonValueConverter = objectToJsonValueConverter;
+    }
 
     @Override
     public Function<Object, JsonEnvelope> withMetadataFrom(final JsonEnvelope envelope) {
@@ -47,6 +52,7 @@ public class DefaultEnvelopeBuilderProvider implements EnvelopeBuilderProvider {
 
     @Override
     public Function<Object, JsonEnvelope> withMetadataFrom(final JsonEnvelope envelope, final String name) {
+        System.out.println("In DEBP");
         return x -> envelopeFrom(buildMetaData(envelope.metadata(), name), x == null ? JsonValue.NULL : objectToJsonValueConverter.convert(x));
     }
 

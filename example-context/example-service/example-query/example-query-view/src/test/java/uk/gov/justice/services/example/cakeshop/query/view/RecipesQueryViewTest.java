@@ -22,6 +22,10 @@ import static uk.gov.justice.services.test.utils.core.messaging.JsonEnvelopeBuil
 import static uk.gov.justice.services.test.utils.core.messaging.MetadataBuilderFactory.metadataWithDefaults;
 
 import uk.gov.justice.services.common.converter.ObjectToJsonValueConverter;
+import uk.gov.justice.services.common.converter.jackson.ObjectMapperProducer;
+import uk.gov.justice.services.common.util.Clock;
+import uk.gov.justice.services.common.util.UtcClock;
+import uk.gov.justice.services.core.enveloper.DefaultEnveloper;
 import uk.gov.justice.services.core.enveloper.Enveloper;
 import uk.gov.justice.services.example.cakeshop.query.view.response.PhotoView;
 import uk.gov.justice.services.example.cakeshop.query.view.response.RecipeView;
@@ -38,6 +42,8 @@ import java.util.UUID;
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -51,17 +57,24 @@ public class RecipesQueryViewTest {
     @Spy
     private Enveloper enveloper = new EnveloperFactory().create();
 
-//    @Spy
-//    EnvelopeBuilderProvider envelopeBuilderProvider = new DefaultEnvelopeBuilderProvider();
-
-
-/*
-    @InjectMocks
-    EnvelopeBuilderProvider envelopeBuilderProvider = new DefaultEnvelopeBuilderProvider();
-*/
-
     @Mock
     ObjectToJsonValueConverter objectToJsonValueConverter;
+
+    @Mock
+    Clock clock;
+
+    @Spy
+    EnvelopeBuilderProvider envelopeBuilderProvider = new DefaultEnvelopeBuilderProvider(new UtcClock(),
+            new ObjectToJsonValueConverter(new ObjectMapperProducer().objectMapper()));
+
+
+/*    @InjectMocks
+    EnvelopeBuilderProvider envelopeBuilderProvider = new DefaultEnvelopeBuilderProvider(new UtcClock(),
+            new ObjectToJsonValueConverter(new ObjectMapperProducer().objectMapper()));*/
+
+
+    /*    @Mock
+    ObjectToJsonValueConverter objectToJsonValueConverter;*/
 //    @Mock
 //    private JsonObjectBuilder jsonObjectBuilder;
 
@@ -70,8 +83,18 @@ public class RecipesQueryViewTest {
     @Mock
     private RecipeService service;
 
+    @Mock
+    private EnvelopeBuilderProvider defaultEnvelopeBuilderProvider;
+
     @InjectMocks
     private RecipesQueryView queryView;
+
+    @Before
+    public void setup() throws JsonProcessingException {
+        defaultEnvelopeBuilderProvider = new DefaultEnvelopeBuilderProvider(
+                new UtcClock(),
+                new ObjectToJsonValueConverter(new ObjectMapperProducer().objectMapper()));
+    }
 
     @Test
     public void shouldHaveCorrectHandlerMethod() throws Exception {
@@ -99,7 +122,7 @@ public class RecipesQueryViewTest {
         final JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder();
         jsonObjectBuilder.add("key", "value");
 
-        when(objectToJsonValueConverter.convert("")).thenReturn(jsonObjectBuilder.build());
+        //when(objectToJsonValueConverter.convert("")).thenReturn(jsonObjectBuilder.build());
 
         final JsonEnvelope response = queryView.findRecipe(
                 envelope().with(metadataWithDefaults())
